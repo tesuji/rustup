@@ -8,10 +8,14 @@ matrix:
       dist: xenial
       env: TARGET=x86_64-unknown-linux-gnu NO_ADD=1
       rust: nightly
+      script:
+        - cargo clippy --all --examples --tests
+    - dist: xenial
+      env: TARGET=x86_64-unknown-linux-gnu NO_ADD=1
+      rust: stable
+      script:
+        - bash ci/run.sh
 
 install:
   - if [ -z "$NO_ADD" ]; then rustup target add $TARGET; fi
   - rustup component add rustfmt clippy
-
-script:
-  - cargo clippy --all --examples --tests

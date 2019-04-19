@@ -9,7 +9,7 @@ matrix:
       env: TARGET=x86_64-unknown-linux-gnu NO_ADD=1
       rust: nightly
       script:
-        - cargo clippy --all --examples --tests
+        - cargo clippy -j1 --all --examples --tests
     - dist: xenial
       env: TARGET=x86_64-unknown-linux-gnu NO_ADD=1
       rust: stable

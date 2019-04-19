@@ -22,7 +22,7 @@ travis_fold end "fetch.image.${TARGET}"
 if [ -f "ci/docker/$DOCKER/Dockerfile" ]; then
   travis_fold start "build.Dockerfile.${DOCKER}"
   travis_time_start
-  travis_do_cmd docker build -t "$DOCKER" "ci/docker/$DOCKER/"
+  travis_do_cmd docker build --quiet -t "$DOCKER" "ci/docker/$DOCKER/"
   travis_time_finish
   travis_fold end "build.Dockerfile.${DOCKER}"
 fi

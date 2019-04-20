@@ -1,11 +1,13 @@
-dist: trusty
+dist: xenial
 services:
   - docker
 language: rust
 
-# git:
-#   depth: 2
-#   quiet: true
+git:
+  # depth: 2
+  depth: false
+  quiet: true
+  submodules: false
 
 matrix:
   fast_finish: true

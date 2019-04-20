@@ -3,9 +3,9 @@ services:
   - docker
 language: rust
 
-git:
-  depth: 1
-  quiet: true
+# git:
+#   depth: 2
+#   quiet: true
 
 matrix:
   fast_finish: true

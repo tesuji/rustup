@@ -50,7 +50,7 @@ matrix:
     # Unclear why!
     - &mac
       os: osx
-      osx_image: xcode9.2
+      osx_image: xcode10.1
       if: branch != master
       env: MACOSX_DEPLOYMENT_TARGET=10.7 TARGET=i686-apple-darwin
     - <<: *mac

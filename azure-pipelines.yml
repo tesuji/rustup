@@ -1,0 +1,78 @@
+trigger:
+  branches:
+    include: ['*']
+  tags:
+    include: ['*']
+
+jobs:
+  - job: 'Clippy'
+    pool:
+      vmImage: windows-2019
+    steps:
+      - bash: rustup self update
+        displayName: rustup self-update
+      # XXX: Do not run all-features on Windows because openssl cannot be
+      #      built on Windows.
+      - bash: cargo clippy --all --all-targets # --all-features
+        displayName: Run Clippy
+
+  - job: 'Windows'
+    pool:
+      vmImage: windows-2019
+    variables:
+      MINGW_URL: https://rust-lang-ci2.s3.amazonaws.com/rust-ci-mirror
+      RUSTFLAGS: -Ctarget-feature=+crt-static
+    strategy:
+      matrix:
+        x86_64-windows-msvc:
+          TARGET: x86_64-pc-windows-msvc
+        i686-windows-msvc:
+          TARGET: i686-pc-windows-msvc
+        # MinGW Builds
+        x86_64-windows-gnu:
+          TARGET: x86_64-pc-windows-gnu
+          MINGW_ARCHIVE: x86_64-6.3.0-release-posix-seh-rt_v5-rev2.7z
+          MINGW_DIR: mingw64
+        i686-windows-gnu:
+          TARGET: i686-pc-windows-gnu
+          MINGW_ARCHIVE: i686-6.3.0-release-posix-dwarf-rt_v5-rev2.7z
+          MINGW_DIR: mingw32
+    steps:
+      - bash: rustup self update
+        displayName: rustup self-update
+      - bash: |
+          set -ex
+          curl -sSf -O '$(MINGW_URL)'/'$(MINGW_ARCHIVE)'
+          7z x -y '$(MINGW_ARCHIVE)' -o/c/mingw
+          echo '##vso[task.prependpath]C:\mingw\$(MINGW_DIR)\bin'
+          rm '$(MINGW_ARCHIVE)'
+        displayName: Check out MinGW toolchain
+        condition: and(succeeded(), variables['MINGW_DIR'])
+      - bash: |
+          set -ex
+          rustup target add '$(TARGET)'
+        displayName: Install target toolchain
+        condition: and(succeeded(), ne(variables['TARGET'], 'x86_64-pc-windows-msvc'))
+      - bash: |
+          set -ex
+          gcc --version
+          rustup -Vv
+          cargo -Vv
+          rustc -Vv
+          cargo build -v --release --all --all-targets --target '$(TARGET)' --locked
+          cargo run --release --target '$(TARGET)' --locked -- --dump-testament
+          cargo test --release --target '$(TARGET)'
+        displayName: Test
+      # Publish Build Artifacts
+      - bash: |
+          set -ex
+          mkdir -p '$(Build.ArtifactStagingDirectory)'
+          cp 'target\$(TARGET)\release\rustup-init.exe' '$(Build.ArtifactStagingDirectory)'
+          cp 'target\$(TARGET)\release\rustup-init.exe' '$(Build.ArtifactStagingDirectory)\rustup-setup.exe'
+          find '$(Build.ArtifactStagingDirectory)' -maxdepth 1 -type f -exec sh -c 'fn="$1"; sha256sum -b "$fn" > "$fn".sha256' sh {} \;
+        displayName: Prepare artifacts
+        condition: and(succeeded(), and(ne(variables['BUILD_REASON'], 'PullRequest'), ne(variables['BUILD_SOURCEBRANCH'], 'refs/heads/auto')))
+      - task: PublishBuildArtifacts@1
+        inputs:
+          pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          artifactName: 'rustup-$(TARGET)'

@@ -1,9 +1,10 @@
 # rustup: the Rust toolchain installer
 
-| CI           | Build Status                                             |
-|--------------|----------------------------------------------------------|
-| Travis       | [![Travis Build Status][travis-badge]][travis-url]       |
-| AppVeyor     | [![AppVeyor Build Status][appveyor-badge]][appveyor-url] |
+| CI             | Build Status                                             |
+|----------------|----------------------------------------------------------|
+| Travis         | [![Travis Build Status][travis-badge]][travis-url]       |
+| AppVeyor       | [![AppVeyor Build Status][appveyor-badge]][appveyor-url] |
+| AzurePipelines | [![Azure Build Status][azure-badge]][azure-url]          |
 
 *rustup* installs [The Rust Programming Language][rustlang] from the official
 release channels, enabling you to easily switch between stable, beta,
@@ -779,3 +780,5 @@ at your option.
 [travis-badge]: https://travis-ci.com/rust-lang/rustup.rs.svg
 [appveyor-url]: https://ci.appveyor.com/project/rust-lang-libs/rustup-rs
 [appveyor-badge]: https://ci.appveyor.com/api/projects/status/github/rust-lang/rustup.rs?svg=true
+[azure-badge]: https://dev.azure.com/taolzu/rustup.rs/_apis/build/status/lzutao.rustup.rs?branchName=master
+[azure-url]: https://dev.azure.com/taolzu/rustup.rs/_build/latest?definitionId=1&branchName=master

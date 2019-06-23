@@ -1139,11 +1139,10 @@ fn do_add_to_path(methods: &[PathUpdateMethod]) -> Result<()> {
     use winreg::enums::{RegType, HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
     use winreg::{RegKey, RegValue};
 
-    let old_path = if let Some(s) = get_windows_path_var()? {
-        s
-    } else {
-        // Non-unicode path
-        return Ok(());
+    let old_path = get_windows_path_var()?;
+    let old_path = match old_path.to_str() {
+        Some(path) => path,
+        None => return Ok(()),
     };
 
     let mut new_path = utils::cargo_home()?
@@ -1193,7 +1192,8 @@ fn do_add_to_path(methods: &[PathUpdateMethod]) -> Result<()> {
 // this returns None then the PATH varible is not unicode and we
 // should not mess with it.
 #[cfg(windows)]
-fn get_windows_path_var() -> Result<Option<String>> {
+fn get_windows_path_var() -> Result<PathBuf> {
+    use std::ffi::OsString;
     use std::io;
     use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
     use winreg::RegKey;
@@ -1203,18 +1203,10 @@ fn get_windows_path_var() -> Result<Option<String>> {
         .open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)
         .chain_err(|| ErrorKind::PermissionDenied)?;
 
-    let reg_value = environment.get_raw_value("PATH");
+    let reg_value: io::Result<OsString> = environment.get_value("PATH");
     match reg_value {
-        Ok(val) => {
-            if let Some(s) = utils::string_from_winreg_value(&val) {
-                Ok(Some(s))
-            } else {
-                warn!("the registry key HKEY_CURRENT_USER\\Environment\\PATH does not contain valid Unicode. \
-                       Not modifying the PATH variable");
-                return Ok(None);
-            }
-        }
-        Err(ref e) if e.kind() == io::ErrorKind::NotFound => Ok(Some(String::new())),
+        Ok(val) => Ok(val.into()),
+        Err(ref e) if e.kind() == io::ErrorKind::NotFound => Ok(PathBuf::new()),
         Err(e) => Err(e).chain_err(|| ErrorKind::WindowsUninstallMadness),
     }
 }
@@ -1254,21 +1246,19 @@ fn do_remove_from_path(methods: &[PathUpdateMethod]) -> Result<()> {
     use winreg::enums::{RegType, HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
     use winreg::{RegKey, RegValue};
 
-    let old_path = if let Some(s) = get_windows_path_var()? {
-        s
-    } else {
-        // Non-unicode path
-        return Ok(());
+    let old_path = get_windows_path_var()?;
+    let old_path = match old_path.to_str() {
+        Some(path) => path,
+        None => return Ok(()),
     };
 
     let path_str = utils::cargo_home()?
         .join("bin")
         .to_string_lossy()
         .to_string();
-    let idx = if let Some(i) = old_path.find(&path_str) {
-        i
-    } else {
-        return Ok(());
+    let idx = match old_path.find(&path_str) {
+        Some(i) => i,
+        None => return Ok(()),
     };
 
     // If there's a trailing semicolon (likely, since we added one during install),

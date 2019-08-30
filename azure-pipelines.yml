@@ -43,6 +43,9 @@ jobs:
           rustc -Vv
           cargo build -v --release --all --all-targets --target '$(TARGET)' --locked
           cargo run --release --target '$(TARGET)' --locked -- --dump-testament
+        displayName: Build
+      - bash: |
+          set -ex
           cargo test --release --target '$(TARGET)'
         displayName: Test
       # Publish Build Artifacts

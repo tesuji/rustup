@@ -9,7 +9,7 @@ jobs:
     pool:
       vmImage: windows-2019
     steps:
-      - bash: rustup self update
+      - bash: rustup self update && rustup update
         displayName: rustup self-update
       # XXX: Do not run all-features on Windows because openssl cannot be
       #      built on Windows.
@@ -28,7 +28,7 @@ jobs:
         i686-windows-msvc:
           TARGET: i686-pc-windows-msvc
     steps:
-      - bash: rustup self update
+      - bash: rustup self update && rustup update
         displayName: rustup self-update
       - bash: |
           set -ex

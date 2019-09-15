@@ -18,7 +18,11 @@ travis_setup_env() {
 travis_fold() {
   local action="${1}"
   local name="${2}"
-  printf 'travis_fold:%s:%s\r'"${ANSI_CLEAR}" "${action}" "${name}"
+  if [ "${action}" = start ]; then
+    printf '##[group]%s\n' "${name}"
+  elif [ "${action}" = end ]; then
+    printf '\n##[endgroup]\n'
+  fi
 }
 
 # This is modified loop version of
@@ -41,41 +45,6 @@ travis_retry() {
   }
 
   return "${result}"
-}
-
-# This is from
-# https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/bash/
-travis_nanoseconds() {
-  local cmd='date'
-  local format='+%s%N'
-
-  if command -v gdate >/dev/null; then
-    cmd='gdate'
-  elif [ "$(uname)" = Darwin ]; then
-    format='+%s000000000'
-  fi
-
-  "${cmd}" -u "${format}"
-}
-
-# Generate random integer like bash's `$RANDOM`.
-travis_generate_rand() {
-  shuf -i 0-$((0xffffffff)) -n 1
-}
-
-travis_time_start() {
-  TRAVIS_TIMER_ID="$(printf '%08x' "$(travis_generate_rand)")"
-  TRAVIS_TIMER_START_TIME="$(travis_nanoseconds)"
-  export TRAVIS_TIMER_ID TRAVIS_TIMER_START_TIME
-  printf 'travis_time:start:%s\r'"${ANSI_CLEAR}" "${TRAVIS_TIMER_ID}"
-}
-
-travis_time_finish() {
-  travis_timer_end_time="$(travis_nanoseconds)"
-  local duration="$((travis_timer_end_time - TRAVIS_TIMER_START_TIME))"
-  printf '\ntravis_time:end:%s:start=%s,finish=%s,duration=%s\r'"${ANSI_CLEAR}" \
-         "${TRAVIS_TIMER_ID}" "${TRAVIS_TIMER_START_TIME}" \
-         "${travis_timer_end_time}" "${duration}"
 }
 
 travis_do_cmd() {

@@ -18,16 +18,12 @@ TARGET="$2"
 SKIP_TESTS="$3"
 
 travis_fold start "fetch.image.${TARGET}"
-travis_time_start
 travis_do_cmd bash ci/fetch-rust-docker.bash "${TARGET}"
-travis_time_finish
-travis_fold end "fetch.image.${TARGET}"
+travis_fold end
 
 if [ -f "ci/docker/$DOCKER/Dockerfile" ]; then
   travis_fold start "build.Dockerfile.${DOCKER}"
-  travis_time_start
   travis_do_cmd docker build -t "$DOCKER" -f "ci/docker/${DOCKER}/Dockerfile" .
-  travis_time_finish
   travis_fold end "build.Dockerfile.${DOCKER}"
 fi
 

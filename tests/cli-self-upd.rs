@@ -998,7 +998,6 @@ fn doesnt_write_wrong_path_type_to_reg() {
 
         expect_ok(config, &["rustup", "self", "uninstall", "-y"]);
 
-        let root = RegKey::predef(HKEY_CURRENT_USER);
         let environment = root
             .open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)
             .unwrap();

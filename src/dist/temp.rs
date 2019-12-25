@@ -62,7 +62,7 @@ impl<'a> Notification<'a> {
 }
 
 impl<'a> Display for Notification<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::result::Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use self::Notification::*;
         match self {
             CreatingRoot(path) => write!(f, "creating temp root: {}", path.display()),
@@ -107,7 +107,7 @@ impl error::Error for Error {
 }
 
 impl Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::result::Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use self::Error::*;
         match self {
             CreatingRoot { path, .. } => {

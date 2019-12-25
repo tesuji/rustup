@@ -11,7 +11,7 @@ fn main() {
             let me = env::current_exe().unwrap();
             let mut version_file = PathBuf::from(format!("{}.version", me.display()));
             let mut hash_file = PathBuf::from(format!("{}.version-hash", me.display()));
-            if !version_file.exists() {
+            if cfg!(windows) && !version_file.exists() {
                 // There's a "MAJOR HACKS" statement in `toolchain.rs` right
                 // now where custom toolchains use a `cargo.exe` that's
                 // temporarily located elsewhere so they can execute the correct
@@ -19,7 +19,6 @@ fn main() {
                 // be just next to use.
                 //
                 // Detect this here and work around it.
-                assert!(cfg!(windows));
                 assert!(env::var_os("RUSTUP_TOOLCHAIN").is_some());
                 let mut alt = me.clone();
                 alt.pop(); // remove our filename

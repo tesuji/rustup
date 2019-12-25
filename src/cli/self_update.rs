@@ -1118,17 +1118,19 @@ fn get_add_path_methods() -> Vec<PathUpdateMethod> {
         return vec![PathUpdateMethod::Windows];
     }
 
-    home_dir = utils::home_dir().unwrap();
+    let home_dir = utils::home_dir().unwrap();
 
     let profile = home_dir.join(".profile");
     let mut profiles = vec![profile];
 
     if let Ok(shell) = env::var("SHELL") {
         if shell.contains("zsh") {
-            let zdotdir = env::var("ZDOTDIR")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| home_dir);
-            let zprofile = zdotdir.join(".zprofile");
+            let var = env::var_os("ZDOTDIR");
+            let zprofile = var
+                .as_deref()
+                .map(Path::new)
+                .unwrap_or_else(|| home_dir.as_path())
+                .join(".zprofile");
             profiles.push(zprofile);
         }
     }

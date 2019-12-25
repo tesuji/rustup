@@ -61,7 +61,7 @@ impl<'a> Notification<'a> {
 }
 
 impl<'a> Display for Notification<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::result::Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use self::Notification::*;
         match self {
             CreatingDirectory(name, path) => {

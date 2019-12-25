@@ -14,7 +14,6 @@ use rustup::{command, Cfg, Toolchain};
 use std::error::Error;
 use std::fmt;
 use std::io::Write;
-use std::iter;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;

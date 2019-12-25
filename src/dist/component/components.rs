@@ -148,7 +148,7 @@ pub struct ComponentPart(pub String, pub PathBuf);
 
 impl ComponentPart {
     pub fn encode(&self) -> String {
-        format!("{}:{}", &self.0, &self.1.to_string_lossy())
+        format!("{}:{}", &self.0, &self.1.display())
     }
     pub fn decode(line: &str) -> Option<Self> {
         line.find(':')

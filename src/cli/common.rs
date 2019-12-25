@@ -12,7 +12,7 @@ use std::fs;
 use std::io::{BufRead, ErrorKind, Write};
 use std::path::Path;
 use std::sync::Arc;
-use std::{cmp, env, iter};
+use std::{cmp, env};
 use term2::Terminal;
 
 pub const WARN_COMPLETE_PROFILE: &str = "downloading with complete profile isn't recommended unless you are a developer of the rust language";

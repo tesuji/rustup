@@ -9,45 +9,49 @@ use std::path::Path;
 use std::process::{Command, ExitStatus};
 use std::str;
 
-pub fn ensure_dir_exists<P: AsRef<Path>, F: FnOnce(&Path)>(
-    path: P,
-    callback: F,
-) -> io::Result<bool> {
-    if !is_directory(path.as_ref()) {
-        callback(path.as_ref());
-        fs::create_dir_all(path.as_ref()).map(|()| true)
+pub fn ensure_dir_exists<P, F>(path: P, callback: F) -> io::Result<bool>
+where
+    P: AsRef<Path>,
+    F: FnOnce(&Path),
+{
+    let path = path.as_ref();
+    if !is_directory(path) {
+        callback(path);
+        fs::create_dir_all(path)?;
+        Ok(true)
     } else {
         Ok(false)
     }
 }
 
 pub fn is_directory<P: AsRef<Path>>(path: P) -> bool {
-    fs::metadata(path).ok().as_ref().map(fs::Metadata::is_dir) == Some(true)
+    path.as_ref()
+        .metadata()
+        .ok()
+        .as_ref()
+        .map_or(false, fs::Metadata::is_dir)
 }
 
 pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
-    fs::metadata(path).ok().as_ref().map(fs::Metadata::is_file) == Some(true)
+    path.as_ref()
+        .metadata()
+        .ok()
+        .as_ref()
+        .map_or(false, fs::Metadata::is_file)
 }
 
 pub fn path_exists<P: AsRef<Path>>(path: P) -> bool {
-    fs::metadata(path).is_ok()
+    path.as_ref().exists()
 }
 
 pub fn random_string(length: usize) -> String {
     use rand::Rng;
     const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789_";
     let mut rng = rand::thread_rng();
-    (0..length)
-        .map(|_| char::from(CHARSET[rng.gen_range(0, CHARSET.len())]))
-        .collect()
-}
-
-pub fn if_not_empty<S: PartialEq<str>>(s: S) -> Option<S> {
-    if s == *"" {
-        None
-    } else {
-        Some(s)
-    }
+    let choose_pw: Vec<u8> = (0..length)
+        .map(|_| CHARSET[rng.gen_range(0, CHARSET.len())])
+        .collect();
+    unsafe { String::from_utf8_unchecked(choose_pw) }
 }
 
 pub fn write_file(path: &Path, contents: &str) -> io::Result<()> {
@@ -57,18 +61,14 @@ pub fn write_file(path: &Path, contents: &str) -> io::Result<()> {
         .create(true)
         .open(path)?;
 
-    io::Write::write_all(&mut file, contents.as_bytes())?;
-
-    file.sync_data()?;
-
-    Ok(())
+    file.write_all(contents.as_bytes())?;
+    file.sync_data()
 }
 
-pub fn filter_file<F: FnMut(&str) -> bool>(
-    src: &Path,
-    dest: &Path,
-    mut filter: F,
-) -> io::Result<usize> {
+pub fn filter_file<F>(src: &Path, dest: &Path, mut filter: F) -> io::Result<usize>
+where
+    F: FnMut(&str) -> bool,
+{
     let src_file = fs::File::open(src)?;
     let dest_file = fs::File::create(dest)?;
 

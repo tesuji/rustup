@@ -15,7 +15,7 @@ use retry::delay::{jitter, Fibonacci};
 use retry::{retry, OperationResult};
 
 pub use crate::utils::utils::raw::{
-    find_cmd, has_cmd, if_not_empty, is_directory, is_file, path_exists, prefix_arg, random_string,
+    find_cmd, has_cmd, is_directory, is_file, path_exists, prefix_arg, random_string,
 };
 
 pub struct ExitCode(pub i32);
@@ -348,12 +348,11 @@ pub fn copy_file(src: &Path, dest: &Path) -> Result<()> {
     if metadata.file_type().is_symlink() {
         symlink_file(&src, dest).map(|_| ())
     } else {
-        fs::copy(src, dest)
-            .chain_err(|| ErrorKind::CopyingFile {
-                src: PathBuf::from(src),
-                dest: PathBuf::from(dest),
-            })
-            .map(|_| ())
+        fs::copy(src, dest).chain_err(|| ErrorKind::CopyingFile {
+            src: PathBuf::from(src),
+            dest: PathBuf::from(dest),
+        })?;
+        Ok(())
     }
 }
 
@@ -506,8 +505,9 @@ pub fn format_path_for_display(path: &str) -> String {
 /// Encodes a utf-8 string as a null-terminated UCS-2 string in bytes
 #[cfg(windows)]
 pub fn string_to_winreg_bytes(s: &str) -> Vec<u8> {
+    use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
-    let v: Vec<_> = OsString::from(format!("{}\x00", s)).encode_wide().collect();
+    let v: Vec<_> = OsStr::new(s).encode_wide().chain(Some(0)).collect();
     unsafe { std::slice::from_raw_parts(v.as_ptr().cast::<u8>(), v.len() * 2).to_vec() }
 }
 
@@ -524,7 +524,6 @@ pub fn string_from_winreg_value(val: &winreg::RegValue) -> Option<String> {
         RegType::REG_SZ | RegType::REG_EXPAND_SZ => {
             // Copied from winreg
             let words = unsafe {
-                #[allow(clippy::cast_ptr_alignment)]
                 slice::from_raw_parts(val.bytes.as_ptr().cast::<u16>(), val.bytes.len() / 2)
             };
             String::from_utf16(words).ok().and_then(|mut s| {
@@ -678,13 +677,13 @@ mod tests {
     fn test_cargo_home() {
         // CARGO_HOME unset, we'll get the default ending in /.cargo
         env::remove_var("CARGO_HOME");
-        let cargo_home1 = cargo_home();
-        let ch = format!("{}", cargo_home1.unwrap().display());
+        let cargo_home1 = cargo_home().unwrap();
+        let ch = cargo_home1.display().to_string();
         assert!(ch.contains("/.cargo") || ch.contains("\\.cargo"));
 
         env::set_var("CARGO_HOME", "/test");
-        let cargo_home2 = cargo_home();
-        assert!(format!("{}", cargo_home2.unwrap().display()).contains("/test"));
+        let cargo_home2 = cargo_home().unwrap();
+        assert!(cargo_home2.display().to_string().contains("/test"));
     }
 
     #[test]

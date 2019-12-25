@@ -23,7 +23,8 @@ jobs:
       - name: Install Rust
         run: |
           sh ./rustup-init.sh -y --default-toolchain=stable --profile=minimal
-          $HOME/.cargo/bin/rustup update --no-self-update stable
+          # FIXME: Do not update it unless we want Rust newer features
+          # $HOME/.cargo/bin/rustup update --no-self-update stable
           echo "##[add-path]$HOME/.cargo/bin"
         shell: bash
       - name: Build and test

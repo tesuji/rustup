@@ -5,6 +5,9 @@ use std::io;
 
 use pulldown_cmark::{Event, Tag};
 
+const INDENT_WIDTH: u32 = 2;
+const INDENT_LIM: u32 = INDENT_WIDTH * 8;
+
 // Handles the wrapping of text written to the console
 struct LineWrapper<'a, T: Terminal> {
     indent: u32,
@@ -22,11 +25,10 @@ impl<'a, T: Terminal + 'a> LineWrapper<'a, T> {
     }
     // Called before writing text to ensure indent is applied
     fn write_indent(&mut self) {
+        static INDENT: &[u8] = &[b' '; INDENT_LIM as usize];
         if self.pos == 0 {
             // Write a space for each level of indent
-            for _ in 0..self.indent {
-                let _ = write!(self.w, " ");
-            }
+            let _ = self.w.write_all(&INDENT[..self.indent as usize]);
             self.pos = self.indent;
         }
     }
@@ -47,7 +49,7 @@ impl<'a, T: Terminal + 'a> LineWrapper<'a, T> {
         }
 
         // Write the word
-        let _ = write!(self.w, "{}", word);
+        let _ = self.w.write_all(word.as_bytes());
         self.pos += word_len;
     }
     fn write_space(&mut self) {
@@ -126,12 +128,12 @@ impl<'a, T: Terminal + io::Write + 'a> LineFormatter<'a, T> {
             Tag::BlockQuote => {}
             Tag::CodeBlock(_lang) => {
                 self.wrapper.write_line();
-                self.wrapper.indent += 2;
+                self.wrapper.indent += INDENT_WIDTH;
                 self.is_code_block = true;
             }
             Tag::List(_) => {
                 self.wrapper.write_line();
-                self.wrapper.indent += 2;
+                self.wrapper.indent += INDENT_WIDTH;
             }
             Tag::Item => {
                 self.wrapper.write_line();
@@ -163,10 +165,10 @@ impl<'a, T: Terminal + io::Write + 'a> LineFormatter<'a, T> {
             Tag::BlockQuote => {}
             Tag::CodeBlock(_) => {
                 self.is_code_block = false;
-                self.wrapper.indent -= 2;
+                self.wrapper.indent -= INDENT_WIDTH;
             }
             Tag::List(_) => {
-                self.wrapper.indent -= 2;
+                self.wrapper.indent -= INDENT_WIDTH;
                 self.wrapper.write_line();
             }
             Tag::Item => {}
@@ -199,10 +201,7 @@ impl<'a, T: Terminal + io::Write + 'a> LineFormatter<'a, T> {
                 self.pop_attr();
             }
             Html(_html) => {}
-            SoftBreak => {
-                self.wrapper.write_line();
-            }
-            HardBreak => {
+            SoftBreak | HardBreak => {
                 self.wrapper.write_line();
             }
             Rule => {}
@@ -214,7 +213,7 @@ impl<'a, T: Terminal + io::Write + 'a> LineFormatter<'a, T> {
 }
 
 pub fn md<'a, S: AsRef<str>, T: Terminal + io::Write + 'a>(t: &'a mut T, content: S) {
-    let mut f = LineFormatter::new(t, 0, 79);
+    let mut f = LineFormatter::new(t, 0, 80);
     let parser = pulldown_cmark::Parser::new(content.as_ref());
     for event in parser {
         f.process_event(event);

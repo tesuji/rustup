@@ -26,6 +26,7 @@ runtest () {
 
 if [ -z "$SKIP_TESTS" ]; then
   cargo run --locked --release --target "$TARGET" "${FEATURES[@]}" -- --dump-testament
+  cargo run --locked --release --target "$TARGET" "${FEATURES[@]}" -- -y --default-toolchain=none --profile=minimal
   runtest -p download
   runtest --bin rustup-init
   runtest --lib --all

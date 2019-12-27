@@ -53,7 +53,12 @@ jobs:
           TARGET: ${{ matrix.target }}
           CARGO_INCREMENTAL: 0
         shell: bash
-        run: bash ci/run.bash
+        run: |
+          # bash ci/run.bash
+          cargo build --locked --release --target "$TARGET" "${FEATURES[@]}"
+          cargo test --no-run --locked --release --target "$TARGET" "${FEATURES[@]}"
+          CARGO_HOME="$PWD/home" RUSTUP_HOME="$PWD/home" \
+          target/"$TARGET"/release/rustup-init"${EXE_SUFFIX}" -y --default-toolchain=none --profile=minimal
       - name: Clean up cache
         shell: bash
         run: |

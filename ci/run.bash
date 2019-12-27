@@ -9,7 +9,8 @@ cargo -vV
 
 FEATURES=()
 case "$(uname -s)" in
-  *NT* ) ;; # Windows NT
+  # Windows NT
+  *NT* ) EXE_SUFFIX=.exe ;;
   * ) FEATURES=('--features' 'vendored-openssl') ;;
 esac
 
@@ -26,7 +27,8 @@ runtest () {
 
 if [ -z "$SKIP_TESTS" ]; then
   cargo run --locked --release --target "$TARGET" "${FEATURES[@]}" -- --dump-testament
-  cargo run --locked --release --target "$TARGET" "${FEATURES[@]}" -- -y --default-toolchain=none --profile=minimal
+  mkdir home
+  CARGO_HOME="$PWD/home" RUSTUP_HOME="$PWD/home" target/"$TARGET"/release/rustup-init"${EXE_SUFFIX}" -y --default-toolchain=none --profile=minimal
   runtest -p download
   runtest --bin rustup-init
   runtest --lib --all

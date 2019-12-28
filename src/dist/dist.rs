@@ -18,9 +18,6 @@ use std::str::FromStr;
 
 pub static DEFAULT_DIST_SERVER: &str = "https://static.rust-lang.org";
 
-// Deprecated
-pub static DEFAULT_DIST_ROOT: &str = "https://static.rust-lang.org/dist";
-
 // The channel patterns we support
 static TOOLCHAIN_CHANNELS: &[&str] = &[
     "nightly",
@@ -402,8 +399,8 @@ impl FromStr for ToolchainDesc {
 
 impl ToolchainDesc {
     pub fn manifest_v1_url(&self, dist_root: &str) -> String {
-        let do_manifest_staging = env::var("RUSTUP_STAGED_MANIFEST").is_ok();
-        match (self.date.as_ref(), do_manifest_staging) {
+        let do_manifest_staging = env::var_os("RUSTUP_STAGED_MANIFEST").is_some();
+        match (self.date.as_deref(), do_manifest_staging) {
             (None, false) => format!("{}/channel-rust-{}", dist_root, self.channel),
             (Some(date), false) => format!("{}/{}/channel-rust-{}", dist_root, date, self.channel),
             (None, true) => format!("{}/staging/channel-rust-{}", dist_root, self.channel),
@@ -636,7 +633,7 @@ fn update_from_dist_<'a>(
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(BACKTRACK_LIMIT_DEFAULT);
-        Some(if provided < 1 { 1 } else { provided })
+        Some(std::cmp::max(provided, 1))
     };
 
     // In case there is no allow-downgrade option set

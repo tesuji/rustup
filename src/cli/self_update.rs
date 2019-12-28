@@ -501,18 +501,17 @@ fn do_anti_sudo_check(no_prompt: bool) -> Result<()> {
 #[cfg(windows)]
 fn do_msvc_check(opts: &InstallOpts) -> Result<bool> {
     // Test suite skips this since it's env dependent
-    if env::var("RUSTUP_INIT_SKIP_MSVC_CHECK").is_ok() {
+    if env::var_os("RUSTUP_INIT_SKIP_MSVC_CHECK").is_some() {
         return Ok(true);
     }
 
     use cc::windows_registry;
-    let host_triple = if let Some(trip) = opts.default_host_triple.as_ref() {
-        trip.to_owned()
-    } else {
-        TargetTriple::from_host_or_build().to_string()
-    };
+    let host_triple = opts
+        .default_host_triple
+        .as_deref()
+        .or_else(|| TargetTriple::from_host_or_build().0.as_str());
     let installing_msvc = host_triple.contains("msvc");
-    let have_msvc = windows_registry::find_tool(&host_triple, "cl.exe").is_some();
+    let have_msvc = windows_registry::find_tool(host_triple, "cl.exe").is_some();
     if installing_msvc && !have_msvc {
         return Ok(false);
     }
@@ -1071,11 +1070,6 @@ fn wait_for_parent() -> Result<()> {
     Ok(())
 }
 
-#[cfg(unix)]
-pub fn complete_windows_uninstall() -> Result<()> {
-    panic!("stop doing that")
-}
-
 #[derive(PartialEq)]
 enum PathUpdateMethod {
     RcFile(PathBuf),
@@ -1470,7 +1464,8 @@ pub fn prepare_update() -> Result<Option<PathBuf>> {
         build_triple
     };
 
-    let update_root = env::var("RUSTUP_UPDATE_ROOT").unwrap_or_else(|_| String::from(UPDATE_ROOT));
+    let update_root = env::var("RUSTUP_UPDATE_ROOT").ok();
+    let update_root = update_root.as_deref().unwrap_or(UPDATE_ROOT);
 
     let tempdir = tempfile::Builder::new()
         .prefix("rustup-update")

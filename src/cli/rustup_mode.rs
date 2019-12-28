@@ -1040,7 +1040,7 @@ fn show(cfg: &Cfg) -> Result<()> {
     fn print_header(t: &mut term::StdoutTerminal, s: &str) -> Result<()> {
         t.attr(term2::Attr::Bold)?;
         writeln!(t, "{}", s)?;
-        writeln!(t, "{}", iter::repeat("-").take(s.len()).collect::<String>())?;
+        writeln!(t, "{}", "-".repeat(s.len()))?;
         writeln!(t)?;
         t.reset()?;
         Ok(())

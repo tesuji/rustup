@@ -162,17 +162,15 @@ impl Cfg {
         // Environment override
         let env_override = env::var("RUSTUP_TOOLCHAIN").ok().filter(|p| !p.is_empty());
 
-        let dist_root_server = match env::var("RUSTUP_DIST_SERVER") {
-            Ok(s) if !s.is_empty() => s,
-            _ => {
-                // For backward compatibility
-                env::var("RUSTUP_DIST_ROOT")
-                    .ok()
-                    .filter(|p| !p.is_empty())
-                    .unwrap_or_else(|| dist::DEFAULT_DIST_ROOT.to_string())
-                    .trim_end_matches("/dist")
-                    .to_owned()
-            }
+        let dist_server = env::var("RUSTUP_DIST_SERVER")
+            .ok()
+            .filter(|p| !p.is_empty());
+        let dist_root_server = match dist_server {
+            Some(s) => s,
+            None => match env::var("DEFAULT_DIST_ROOT").ok().filter(|p| !p.is_empty()) {
+                Some(s) => s.trim_end_matches("/dist").to_string(),
+                None => dist::DEFAULT_DIST_SERVER.to_string(),
+            },
         };
 
         let notify_clone = notify_handler.clone();

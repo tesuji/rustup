@@ -34,6 +34,7 @@ use rustup::env_var::RUST_RECURSION_COUNT_MAX;
 use rustup::utils::utils;
 
 use std::env;
+use std::ffi::OsStr;
 use std::path::PathBuf;
 
 use rs_tracing::*;
@@ -46,11 +47,12 @@ fn main() {
 }
 
 fn run_rustup() -> Result<()> {
-    if let Ok(dir) = env::var("RUSTUP_TRACE_DIR") {
+    let trace_var = env::var_os("RUSTUP_TRACE_DIR");
+    if let Some(dir) = trace_var.as_deref() {
         open_trace_file!(dir)?;
     }
     let result = run_rustup_inner();
-    if env::var("RUSTUP_TRACE_DIR").is_ok() {
+    if trace_var.is_some() {
         close_trace_file!();
     }
     result
@@ -67,15 +69,13 @@ fn run_rustup_inner() -> Result<()> {
     utils::current_exe()?;
 
     // The name of arg0 determines how the program is going to behave
-    let arg0 = match env::var("RUSTUP_FORCE_ARG0") {
-        Ok(v) => Some(v),
-        Err(_) => env::args().next(),
-    }
-    .map(PathBuf::from);
+    let arg0 = env::var_os("RUSTUP_FORCE_ARG0")
+        .or_else(|| env::args_os().next())
+        .map(PathBuf::from);
     let name = arg0
-        .as_ref()
+        .as_deref()
         .and_then(|a| a.file_stem())
-        .and_then(std::ffi::OsStr::to_str);
+        .and_then(OsStr::to_str);
 
     match name {
         Some("rustup") => rustup_mode::main(),
@@ -86,6 +86,7 @@ fn run_rustup_inner() -> Result<()> {
             // to work.
             setup_mode::main()
         }
+        #[cfg(windows)]
         Some(n) if n.starts_with("rustup-gc-") => {
             // This is the final uninstallation stage on windows where
             // rustup deletes its own exe

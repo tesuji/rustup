@@ -189,7 +189,7 @@ fn show_channel_updates(
 
     for (name, banner, width, color, version, previous_version) in data {
         let padding = max_width - width;
-        let padding: String = iter::repeat(' ').take(padding).collect();
+        let padding: String = " ".repeat(padding);
         let _ = write!(t, "  {}", padding);
         let _ = t.attr(term2::Attr::Bold);
         if let Some(color) = color {
@@ -244,25 +244,17 @@ pub fn self_update_permitted(explicit: bool) -> Result<SelfUpdatePermission> {
         Ok(SelfUpdatePermission::Permit)
     } else {
         // Detect if rustup is not meant to self-update
-        match env::var("SNAP") {
-            Ok(_) => {
-                // We're running under snappy so don't even bother
-                // trying to self-update
-                // TODO: Report this to the user?
-                // TODO: Maybe ask snapd if there's an update and report
-                //       that to the user instead?
-                debug!("Skipping self-update because SNAP was detected");
-                if explicit {
-                    return Ok(SelfUpdatePermission::HardFail);
-                } else {
-                    return Ok(SelfUpdatePermission::Skip);
-                }
-            }
-            Err(env::VarError::NotPresent) => {}
-            Err(e) => {
-                return Err(
-                    format!("Could not interrogate SNAP environment variable: {}", e).into(),
-                )
+        if env::var_os("SNAP").is_some() {
+            // We're running under snappy so don't even bother
+            // trying to self-update
+            // TODO: Report this to the user?
+            // TODO: Maybe ask snapd if there's an update and report
+            //       that to the user instead?
+            debug!("Skipping self-update because SNAP was detected");
+            if explicit {
+                return Ok(SelfUpdatePermission::HardFail);
+            } else {
+                return Ok(SelfUpdatePermission::Skip);
             }
         }
         let current_exe = env::current_exe()?;
@@ -491,18 +483,16 @@ pub fn dump_testament() {
 }
 
 fn show_backtrace() -> bool {
-    if let Ok(true) = env::var("RUSTUP_NO_BACKTRACE").map(|s| s == "1") {
+    if env::var_os("RUSTUP_NO_BACKTRACE").map_or(false, |s| s == "1") {
         return false;
     }
 
-    if let Ok(true) = env::var("RUST_BACKTRACE").map(|s| s == "1") {
+    if env::var_os("RUST_BACKTRACE").map_or(false, |s| s == "1") {
         return true;
     }
 
-    for arg in env::args() {
-        if arg == "-v" || arg == "--verbose" {
-            return true;
-        }
+    if env::args_os().any(|arg| arg == "-v" || arg == "--verbose") {
+        return true;
     }
 
     false

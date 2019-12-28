@@ -1,4 +1,5 @@
 use crate::term2;
+use std::env;
 use std::fmt;
 use std::io::Write;
 use term2::Terminal;
@@ -61,7 +62,7 @@ pub fn verbose_fmt(args: fmt::Arguments<'_>) {
 }
 
 pub fn debug_fmt(args: fmt::Arguments<'_>) {
-    if std::env::var("RUSTUP_DEBUG").is_ok() {
+    if env::var_os("RUSTUP_DEBUG").is_some() {
         let mut t = term2::stderr();
         let _ = t.fg(term2::color::BLUE);
         let _ = t.attr(term2::Attr::Bold);

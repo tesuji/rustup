@@ -116,6 +116,13 @@ jobs:
           sed -i 's@^lto@#lto@; s@^codegen@#codegen@;' Cargo.toml
         shell: bash
         if: github.ref != 'refs/heads/stable'
+      - name: Force use of lld to improve linking time
+        run: |
+          cat >> .cargo/config << EOF
+          [target.${{ matrix.target }}]
+          linker = "lld-link"
+          EOF
+        shell: bash
       - name: Run a full build
         run: bash ci/run.bash
       - name: Acquire the AWS tooling

@@ -13,8 +13,6 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.os }}
-    env:
-      RUSTFLAGS: -Ctarget-feature=+crt-static
     strategy:
       fail-fast: false
       matrix:
@@ -152,6 +150,7 @@ jobs:
           if [ ${{ matrix.run_tests }} != true]; then
             echo "::set-env name=SKIP_TESTS::YES"
           fi
+          if [[ ${{ runner.os }} ]]
         shell: bash
 
       # We retrieve mingw from the Rust CI buckets
@@ -175,11 +174,11 @@ jobs:
           .\rustup-init.exe -y --default-host=x86_64-pc-windows-msvc --profile=minimal
           del rustup-init.exe
         shell: powershell
-        if: startsWith(runner.os, 'Windows')
+        if: runner.os == 'Windows'
       - name: Install Rustup using ./rustup-init.sh
         run: |
           sh ./rustup-init.sh --default-toolchain=none --profile=minimal -y
-        if: !startsWith(runner.os, 'Windows')
+        if: runner.os != 'Windows'
 
       - name: Ensure Rust toolchain is up to date
         run: rustup update stable
@@ -238,7 +237,7 @@ jobs:
           pip3 install awscli
         if: github.event_name == 'push' && github.ref == 'refs/heads/stable'
       - name: Prepare the dist and deploy (Windows)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/stable' && startsWith(runner.os, 'Windows')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/stable' && runner.os == 'Windows'
         run: |
           powershell -File .\ci\prepare-deploy.ps1
           aws s3 cp --recursive dist s3://dev-static-rust-lang-org/rustup/dist
@@ -246,7 +245,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Prepare the dist and deploy (*nix)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/stable' && !startsWith(runner.os, 'Windows')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/stable' && runner.os != 'Windows'
         run: |
           bash ci/prepare-deploy.bash
           aws s3 cp --recursive deploy/ s3://dev-static-rust-lang-org/rustup/

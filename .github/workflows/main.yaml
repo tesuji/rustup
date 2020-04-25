@@ -125,10 +125,12 @@ jobs:
       - name: Set environment variables appropriately for the build
         run: |
           echo "::set-env name=TARGET::${{ matrix.target }}"
-          if [ ${{ matrix.run_tests }} != true]; then
+          if [[ ${{ matrix.run_tests }} != true ]]; then
             echo "::set-env name=SKIP_TESTS::YES"
           fi
-          if [[ ${{ runner.os }} ]]
+          if [[ ${{ runner.os }} == 'Windows' ]]; then
+            echo "::set-env name=RUSTFLAGS::-Ctarget-feature=+crt-static"
+          fi
         shell: bash
 
       # We retrieve mingw from the Rust CI buckets

@@ -201,10 +201,14 @@ jobs:
           echo "::set-env name=DOCKER::$DOCKER"
         shell: bash
       - run: |
-          [[ -n "$DOCKER" ]] && bash ci/fetch-rust-docker.bash "${TARGET}"
+          if [[ -n "$DOCKER" ]]; then
+            bash ci/fetch-rust-docker.bash "${TARGET}"
+          fi
         shell: bash
       - run: |
-          [[ -n "$DOCKER" ]] && docker build -t "$DOCKER" -f "ci/docker/${DOCKER}/Dockerfile" .
+          if [[ -n "$DOCKER" ]]; then
+            docker build -t "$DOCKER" -f "ci/docker/${DOCKER}/Dockerfile" .
+          fi
         shell: bash
       - run: |
           if [[ -n "$DOCKER" ]]; then
@@ -231,7 +235,9 @@ jobs:
           fi
         shell: bash
       - run: |
-          [[ -z "$DOCKER" ]] && bash ci/run.bash
+          if [[ -z "$DOCKER" ]]; then
+            bash ci/run.bash
+          fi
         shell: bash
 
       # Deploy steps

@@ -18,7 +18,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        target:
+          - x86_64-unknown-linux-gnu
+          - armv7-unknown-linux-gnueabihf
+          - aarch64-linux-android
+          - aarch64-unknown-linux-gnu
+          - powerpc64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - i686-unknown-linux-gnu
+          - arm-unknown-linux-gnueabi
+          - arm-unknown-linux-gnueabihf
+          - x86_64-unknown-freebsd
+          - x86_64-unknown-netbsd
+          - powerpc-unknown-linux-gnu
+          - powerpc64le-unknown-linux-gnu
+          - mips-unknown-linux-gnu
+          - mips64-unknown-linux-gnuabi64
+          - mipsel-unknown-linux-gnu
+          - mips64el-unknown-linux-gnuabi64
+          - s390x-unknown-linux-gnu
+          - arm-linux-androideabi
+          - armv7-linux-androideabi
+          - i686-linux-android
+          - x86_64-linux-android
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - i686-pc-windows-msvc
+          - x86_64-pc-windows-gnu
+          - i686-pc-windows-gnu
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu

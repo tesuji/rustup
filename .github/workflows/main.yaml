@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.os }}
-    if: matrix.if != null || matrix.if == true
+    # if: matrix.if != null || matrix.if == true
     strategy:
       fail-fast: false
       matrix:
@@ -151,6 +151,9 @@ jobs:
         run: |
           git status
           git describe
+
+      - run: |
+          echo "${{ matrix.if }}"
 
       - name: Set environment variables appropriately for the build
         run: |

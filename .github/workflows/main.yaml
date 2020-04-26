@@ -15,6 +15,7 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.os }}
+    if: matrix.if != null || matrix.if == true
     strategy:
       fail-fast: false
       matrix:

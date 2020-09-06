@@ -115,6 +115,8 @@ jobs:
           echo "::set-env name=DOCKER::$DOCKER"
       - name: Fetch the docker
         run: bash ci/fetch-rust-docker.bash "${TARGET}"
+      - run: bash ci/disable_LTO.bash
+        if: github.event_name == 'push' && github.ref != 'refs/heads/stable'
       - name: Maybe build a docker from there
         run: |
           if [ -f "ci/docker/$DOCKER/Dockerfile" ]; then

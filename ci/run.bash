@@ -23,7 +23,7 @@ esac
 if [[ $(git rev-parse --abbrev-ref HEAD) != stable || $GITHUB_REF != refs/heads/stable ]]; then
   sed -i 's@^lto@#lto@; s@^codegen@#codegen@;' Cargo.toml
   echo '[-] codegen after changed'
-  sed '1,/\[profile/d' Cargo.toml
+  sed -e '1,/\[profile/d' Cargo.toml
 fi
 
 # Force use of lld to improve linking time

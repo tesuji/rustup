@@ -10,7 +10,7 @@ set -ex
 # FIXME: Use stabilized cargo named-profiles on futures
 # https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#custom-named-profiles
 if [[ $GITHUB_REF != refs/heads/stable || $(git rev-parse --abbrev-ref HEAD) != stable ]]; then
-  sed -e 's@^lto@#lto@; s@^codegen@#codegen@; ' -i ".ori" Cargo.toml
+  sed -e 's@^lto@#lto@; s@^codegen@#codegen@; ' -i.ori Cargo.toml
   echo '[-] codegen options after changed'
   sed -e '1,/\[profile/d' -- Cargo.toml
 fi

@@ -15,8 +15,9 @@ if [[ $GITHUB_REF != refs/heads/stable || $(git rev-parse --abbrev-ref HEAD) != 
   sed -e '1,/\[profile/d' -- Cargo.toml
 fi
 
+TARGET_UNDERSCORE=$(echo $TARGET | sed 's/-/_/g')
 # Force use of lld to improve linking time
 cat >> Cargo.toml << EOF
-[target.${TARGET}]
+[target.${TARGET_UNDERSCORE}]
 linker = "lld-link"
 EOF

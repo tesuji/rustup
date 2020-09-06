@@ -98,7 +98,7 @@ jobs:
         run: |
           rustup target install ${{ matrix.target }}
       - run: bash ci/disable_LTO.bash
-        if: github.event_name == 'push' && github.ref != 'refs/heads/stable'
+        if: github.ref != 'refs/heads/stable'
       - name: Run a full build
         run: bash ci/run.bash
       - name: Acquire the AWS tooling

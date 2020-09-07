@@ -52,6 +52,7 @@ tempfile = "3.1"
 pgp = {version = "0.7", default-features = false}
 # FIXME(issue #1818, #1826, and friends)
 term = "=0.5.1"
+termcolor = "1.1.0"
 threadpool = "1"
 toml = "0.5"
 url = "2.1"

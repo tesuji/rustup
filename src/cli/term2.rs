@@ -7,6 +7,9 @@ use std::ops::Deref;
 use std::sync::Mutex;
 
 use lazy_static::lazy_static;
+use termcolor::Color::{Cyan, Green, Red, Yellow};
+use termcolor::{self, Color, ColorSpec, ColorChoice, StandardStream, WriteColor};
+
 pub use term::color;
 pub use term::Attr;
 pub use term::Terminal;
@@ -14,100 +17,17 @@ pub use term::Terminal;
 use crate::currentprocess::filesource::{Isatty, Writer};
 use crate::process;
 
-mod termhack {
-    // Things we should submit to term as improvements: here temporarily.
-    use std::collections::HashMap;
-    use std::io;
-
-    use term::terminfo::TermInfo;
-    use term::{StderrTerminal, StdoutTerminal, Terminal, TerminfoTerminal};
-
-    /// Return a Terminal object for T on this platform.
-    /// If there is no terminfo and the platform requires terminfo, then None is returned.
-    fn make_terminal<T, F>(
-        terminfo: Option<TermInfo>,
-        source: F,
-    ) -> Option<Box<dyn Terminal<Output = T> + Send>>
-    where
-        T: 'static + io::Write + Send,
-        // Works around stdio instances being unclonable.
-        F: Fn() -> T + Copy,
-    {
-        let result = terminfo
-            .map(move |ti| TerminfoTerminal::new_with_terminfo(source(), ti))
-            .map(|t| Box::new(t) as Box<dyn Terminal<Output = T> + Send>);
-        #[cfg(windows)]
-        {
-            result.or_else(|| {
-                term::WinConsole::new(source())
-                    .ok()
-                    .map(|t| Box::new(t) as Box<dyn Terminal<Output = T> + Send>)
-            })
-        }
-        #[cfg(not(windows))]
-        {
-            result
-        }
-    }
-
-    pub fn make_terminal_with_fallback<T, F>(
-        terminfo: Option<TermInfo>,
-        source: F,
-    ) -> Box<dyn Terminal<Output = T> + Send>
-    where
-        T: 'static + io::Write + Send,
-        // Works around stdio instances being unclonable.
-        F: Fn() -> T + Copy,
-    {
-        make_terminal(terminfo, source)
-            .or_else(|| {
-                let ti = TermInfo {
-                    names: vec![],
-                    bools: HashMap::new(),
-                    numbers: HashMap::new(),
-                    strings: HashMap::new(),
-                };
-                let t = TerminfoTerminal::new_with_terminfo(source(), ti);
-                Some(Box::new(t) as Box<dyn Terminal<Output = T> + Send>)
-            })
-            .unwrap()
-    }
-    /// Return a Terminal wrapping stdout, or None if a terminal couldn't be
-    /// opened.
-    #[allow(unused)]
-    pub fn stdout(terminfo: Option<TermInfo>) -> Option<Box<StdoutTerminal>> {
-        make_terminal(terminfo, io::stdout)
-    }
-
-    /// Return a Terminal wrapping stderr, or None if a terminal couldn't be
-    /// opened.
-    #[allow(unused)]
-    pub fn stderr(terminfo: Option<TermInfo>) -> Option<Box<StderrTerminal>> {
-        make_terminal(terminfo, io::stderr)
-    }
-
-    /// Return a Terminal wrapping stdout.
-    #[allow(unused)]
-    pub fn stdout_with_fallback(terminfo: Option<TermInfo>) -> Box<StdoutTerminal> {
-        make_terminal_with_fallback(terminfo, io::stdout)
-    }
-
-    /// Return a Terminal wrapping stderr.
-    #[allow(unused)]
-    pub fn stderr_with_fallback(terminfo: Option<TermInfo>) -> Box<StderrTerminal> {
-        make_terminal_with_fallback(terminfo, io::stderr)
-    }
-}
-
 // Decorator to:
 // - Disable all terminal controls on non-tty's
 // - Swallow errors when we try to use features a terminal doesn't have
 //   such as setting colours when no TermInfo DB is present
-pub struct AutomationFriendlyTerminal<T>(Box<dyn term::Terminal<Output = T> + Send>)
-where
-    T: Isatty + io::Write;
-pub type StdoutTerminal = AutomationFriendlyTerminal<Box<dyn Writer>>;
-pub type StderrTerminal = AutomationFriendlyTerminal<Box<dyn Writer>>;
+// pub struct AutomationFriendlyTerminal<T>(Box<dyn term::Terminal<Output = T> + Send>)
+// where
+//     T: Isatty + io::Write;
+// pub type StdoutTerminal = AutomationFriendlyTerminal<Box<dyn Writer>>;
+// pub type StderrTerminal = AutomationFriendlyTerminal<Box<dyn Writer>>;
+pub type StdoutTerminal = Box<dyn WriteColor + Isatty + io::Write> + Send;
+pub type StderrTerminal = Box<dyn WriteColor + Isatty + io::Write> + Send;
 
 macro_rules! swallow_unsupported {
     ( $call:expr ) => {{
@@ -117,12 +37,6 @@ macro_rules! swallow_unsupported {
             Err(e) => Err(e),
         }
     }};
-}
-
-impl Isatty for Box<dyn Writer> {
-    fn isatty(&self) -> bool {
-        self.deref().isatty()
-    }
 }
 
 impl<T> term::Terminal for AutomationFriendlyTerminal<T>
@@ -216,16 +130,17 @@ impl<T: Isatty + io::Write> io::Write for AutomationFriendlyTerminal<T> {
     }
 }
 
-lazy_static! {
-    // Cache the terminfo database for performance.
-    // Caching the actual terminals may be better, as on Windows terminal
-    // detection is per-fd, but this at least avoids the IO subsystem and
-    // caching the stdout instances is more complex
-    static ref TERMINFO: Mutex<Option<term::terminfo::TermInfo>> =
-        Mutex::new(term::terminfo::TermInfo::from_env().ok());
-}
+// lazy_static! {
+//     // Cache the terminfo database for performance.
+//     // Caching the actual terminals may be better, as on Windows terminal
+//     // detection is per-fd, but this at least avoids the IO subsystem and
+//     // caching the stdout instances is more complex
+//     static ref TERMINFO: Mutex<Option<term::terminfo::TermInfo>> =
+//         Mutex::new(term::terminfo::TermInfo::from_env().ok());
+// }
 
 pub fn stdout() -> StdoutTerminal {
+    StandardStream::stdout(ColorChoice::Auto)
     let info_result = TERMINFO.lock().unwrap().clone();
     AutomationFriendlyTerminal(termhack::make_terminal_with_fallback(info_result, || {
         process().stdout()

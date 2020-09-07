@@ -98,6 +98,12 @@ pub trait StdoutSource {
     fn stdout(&self) -> Box<dyn Writer>;
 }
 
+impl Isatty for Box<dyn Writer> {
+    fn isatty(&self) -> bool {
+        self.deref().isatty()
+    }
+}
+
 // -------------- stderr -------------------------------
 
 /// Stand-in for std::io::stderr

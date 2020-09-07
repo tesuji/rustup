@@ -4,17 +4,20 @@ use std::io;
 
 use pulldown_cmark::{Event, Tag};
 
-use super::term2::{color, Attr, Terminal};
+use termcolor::Color::{Cyan, Green, Red, Yellow};
+use termcolor::{self, Color, ColorSpec, StandardStream, WriteColor};
+
+// use super::term2::{color, Attr, Terminal};
 
 // Handles the wrapping of text written to the console
-struct LineWrapper<'a, T: Terminal> {
+struct LineWrapper<'a, T: io::Write> {
     indent: u32,
     margin: u32,
     pos: u32,
     pub w: &'a mut T,
 }
 
-impl<'a, T: Terminal + 'a> LineWrapper<'a, T> {
+impl<'a, T: io::Write + 'a> LineWrapper<'a, T> {
     // Just write a newline
     fn write_line(&mut self) {
         let _ = writeln!(self.w);
@@ -82,7 +85,7 @@ impl<'a, T: Terminal + 'a> LineWrapper<'a, T> {
     }
     // Constructor
     fn new(w: &'a mut T, indent: u32, margin: u32) -> Self {
-        LineWrapper {
+        Self {
             indent,
             margin,
             pos: indent,
@@ -92,13 +95,13 @@ impl<'a, T: Terminal + 'a> LineWrapper<'a, T> {
 }
 
 // Handles the formatting of text
-struct LineFormatter<'a, T: Terminal + io::Write> {
+struct LineFormatter<'a, T: WriteColor + io::Write> {
     is_code_block: bool,
     wrapper: LineWrapper<'a, T>,
     attrs: Vec<Attr>,
 }
 
-impl<'a, T: Terminal + io::Write + 'a> LineFormatter<'a, T> {
+impl<'a, T: WriteColor + io::Write + 'a> LineFormatter<'a, T> {
     fn new(w: &'a mut T, indent: u32, margin: u32) -> Self {
         LineFormatter {
             is_code_block: false,
@@ -221,7 +224,7 @@ impl<'a, T: Terminal + io::Write + 'a> LineFormatter<'a, T> {
     }
 }
 
-pub fn md<'a, S: AsRef<str>, T: Terminal + io::Write + 'a>(t: &'a mut T, content: S) {
+pub fn md<'a, S: AsRef<str>, T: WriteColor + io::Write + 'a>(t: &'a mut T, content: S) {
     let mut f = LineFormatter::new(t, 0, 79);
     let parser = pulldown_cmark::Parser::new(content.as_ref());
     for event in parser {

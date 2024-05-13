@@ -793,6 +793,7 @@ fn check_updates(cfg: &Cfg) -> Result<utils::ExitCode> {
 }
 
 fn update(cfg: &mut Cfg, opts: UpdateOpts) -> Result<utils::ExitCode> {
+    use crate::currentprocess::varsource::VarSource;
     common::warn_if_host_is_emulated();
     let self_update_mode = cfg.get_self_update_mode()?;
     let has_ci_env = process().var_os("CI").map_or(false, |_| true);
